@@ -1,6 +1,6 @@
 import db from "../../configs/dbConnection.js";
 
-const connection = db.getConnection();
+const connection = await db.getConnection();
 
 const createCompany = async (req, res) => {
   try {
@@ -12,29 +12,26 @@ const createCompany = async (req, res) => {
 
     await connection.beginTransaction();
 
-    const createUserQuery =
-      "INSERT INTO users (email,password,type) VALUES (?,?,?)";
+    const userQuery = "INSERT INTO users (email,password,type) VALUES (?,?,?)";
 
-    const [userData] = await connection.execute(createUserQuery, [
+    const [userData] = await connection.execute(userQuery, [
       email,
       password,
-      1
+      3
     ]);
 
-    // const query =
-    //   "INSERT INTO company (name, email, password) VALUES (?, ?, ?)";
+    const companyQuery = "INSERT INTO company (name, user_id) VALUES (?, ?)";
 
-    // connection.query(query, [name, email, password], (err, results) => {
-    //   if (err) {
-    //     console.error("Error executing query:", err.stack);
-    //     return res.status(500).json({ error: "Failed to save company data" });
-    //   }
+    const [companyData] = await connection.execute(companyQuery, [
+      name,
+      userData?.insertId
+    ]);
 
     await connection.commit();
 
     res.status(201).json({
       message: "Company data saved successfully",
-      companyId: results.insertId
+      companyId: companyData.insertId
     });
   } catch (error) {
     console.log(error);
