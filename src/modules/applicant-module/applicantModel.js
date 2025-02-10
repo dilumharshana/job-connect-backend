@@ -2,7 +2,7 @@ import db from "../../configs/dbConnection.js";
 
 const connection = await db.getConnection();
 
-const createCompany = async (req, res) => {
+const createApplicant = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -20,7 +20,7 @@ const createCompany = async (req, res) => {
       3
     ]);
 
-    const companyQuery = "INSERT INTO company (name, user_id) VALUES (?, ?)";
+    const companyQuery = "INSERT INTO applicants (name, user_id) VALUES (?, ?)";
 
     const [companyData] = await connection.execute(companyQuery, [
       name,
@@ -33,7 +33,7 @@ const createCompany = async (req, res) => {
       data: { userId: companyData.insertId }
     });
   } catch (error) {
-    console.log(error.message);
+    console.log(error);
 
     res.status(500).json({
       message: error.message
@@ -42,7 +42,7 @@ const createCompany = async (req, res) => {
 };
 
 const CompanyModule = {
-  createCompany
+  createApplicant
 };
 
 export default CompanyModule;
