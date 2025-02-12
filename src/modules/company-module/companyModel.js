@@ -101,9 +101,34 @@ const createJob = async (req, res) => {
   }
 };
 
+const getAllJobs = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    if (!companyId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const jobQuery = "SELECT * FROM jobs WHERE company = ? ";
+
+    const [jobData] = await connection.execute(jobQuery, [companyId]);
+
+    res.status(201).json({
+      data: jobData
+    });
+  } catch (error) {
+    console.log(error.message);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
 const CompanyModule = {
   createCompany,
-  createJob
+  createJob,
+  getAllJobs
 };
 
 export default CompanyModule;
