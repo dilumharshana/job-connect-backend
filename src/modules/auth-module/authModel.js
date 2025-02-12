@@ -11,7 +11,7 @@ const userLogin = async (req, res) => {
     }
 
     const loginQuery =
-      "SELECT user_types.type FROM user_types INNER JOIN users on user_types.id = users.type WHERE email = ? and password = ?";
+      "SELECT user_types.type, users.id FROM user_types INNER JOIN users on user_types.id = users.type WHERE email = ? and password = ?";
 
     const [userData] = await connection.execute(loginQuery, [email, password]);
 
@@ -19,7 +19,7 @@ const userLogin = async (req, res) => {
 
     if (userData?.[0]) {
       res.status(201).json({
-        data: { userType: userData?.[0]?.type }
+        data: { userType: userData?.[0]?.type, userId: userData?.[0]?.id }
       });
     } else {
       res.status(404).json({

@@ -1,8 +1,12 @@
 import express from "express";
-import { saveCompany } from "../modules/company-module/companyController.js";
+import {
+  saveCompany,
+  saveJob
+} from "../modules/company-module/companyController.js";
 
 const router = express.Router();
 
 router.post("/", async (req, res) => await saveCompany(req, res));
+router.post("/job/", async (req, res) => await saveJob(req, res));
 
 export default router;
