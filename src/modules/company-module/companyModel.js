@@ -109,7 +109,8 @@ const getAllJobs = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const jobQuery = "SELECT * FROM jobs WHERE company = ? ";
+    const jobQuery =
+      "SELECT jobs.*, COUNT(applications.applicantId) as applicant_count FROM jobs inner join applications on jobs.id = applications.jobId inner join company on jobs.company = company.id WHERE company.id = ? GROUP BY jobs.id ";
 
     const [jobData] = await connection.execute(jobQuery, [companyId]);
 
@@ -125,10 +126,75 @@ const getAllJobs = async (req, res) => {
   }
 };
 
+const getDashboardData = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    if (!companyId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const totalActiveJobCountQuery =
+      "SELECT COUNT(*) AS activeJobCount FROM jobs WHERE company = ? AND isActive = 1";
+    const [activeJobCount] = await connection.execute(
+      totalActiveJobCountQuery,
+      [companyId]
+    );
+
+    const totalInactiveJobCountQuery =
+      "SELECT COUNT(*) AS inactiveJobCount FROM jobs WHERE company = ? AND isActive = 0";
+    const [inActiveJobCount] = await connection.execute(
+      totalInactiveJobCountQuery,
+      [companyId]
+    );
+
+    const totalApplicantsCountQuery =
+      "SELECT COUNT(applicantId) as total_applicants FROM applications inner join jobs on applications.jobId = jobs.id inner join company on jobs.company = company.id where company.id = ?";
+    const [applicantsCount] = await connection.execute(
+      totalApplicantsCountQuery,
+      [companyId]
+    );
+
+    const mostAppliedJobQuery =
+      "SELECT jobs.*, COUNT(*) AS applicant_count from jobs INNER JOIN applications on jobs.id = applications.jobId inner join company on  jobs.company = company.id  where company.id = ? GROUP BY applications.jobId ORDER BY applicant_count DESC LIMIT 1 ";
+    const [mostAppliedJobCount] = await connection.execute(
+      mostAppliedJobQuery,
+      [companyId]
+    );
+
+    const leastAppliedJobQuery =
+      "SELECT jobs.*, COUNT(*) AS applicants_count from jobs inner join applications on jobs.id = applications.jobId inner join company on jobs.company = company.id where company.id = ?  GROUP BY applications.jobId  ORDER BY applicants_count ASC LIMIT 1 ";
+    const [leastAppliedJobCount] = await connection.execute(
+      leastAppliedJobQuery,
+      [companyId]
+    );
+
+    const jobClicksQuery =
+      "SELECT COUNT(clicks) as jobClicks from jobs where company = ?";
+    const [jobClickCount] = await connection.execute(jobClicksQuery, [
+      companyId
+    ]);
+
+    res.status(201).json({
+      data: {
+        activeJobCount: activeJobCount?.[0]?.activeJobCount,
+        inActiveJobCount: inActiveJobCount?.[0]?.inactiveJobCount,
+        applicantsCount: applicantsCount?.[0].total_applicants,
+        mostAppliedJob: mostAppliedJobCount?.[0],
+        leastAppliedJob: leastAppliedJobCount?.[0],
+        jobClicks: jobClickCount?.[0].jobClicks
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const CompanyModule = {
   createCompany,
   createJob,
-  getAllJobs
+  getAllJobs,
+  getDashboardData
 };
 
 export default CompanyModule;

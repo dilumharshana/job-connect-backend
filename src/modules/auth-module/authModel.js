@@ -15,11 +15,24 @@ const userLogin = async (req, res) => {
 
     const [userData] = await connection.execute(loginQuery, [email, password]);
 
-    console.log(userData);
+    const userType = userData?.[0]?.type;
+    const userId = userData?.[0]?.id;
+
+    let userName = "";
+
+    if (userType === "COMPANY") {
+      const userNameQuery = "SELECT name FROM company WHERE id = ?";
+      const [userNameData] = await connection.execute(userNameQuery, [userId]);
+      userName = userNameData[0]?.name;
+    } else {
+      const userNameQuery = "SELECT name FROM applicants WHERE id = ?";
+      const [userNameData] = await connection.execute(userNameQuery, [userId]);
+      userName = userNameData[0]?.name;
+    }
 
     if (userData?.[0]) {
       res.status(201).json({
-        data: { userType: userData?.[0]?.type, userId: userData?.[0]?.id }
+        data: { userType, userId, userName }
       });
     } else {
       res.status(404).json({

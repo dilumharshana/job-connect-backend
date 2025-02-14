@@ -11,3 +11,7 @@ export const saveJob = async (req, res) => {
 export const allJobs = async (req, res) => {
   return CompanyModule.getAllJobs(req, res);
 };
+
+export const dashboardData = async (req, res) => {
+  return CompanyModule.getDashboardData(req, res);
+};
