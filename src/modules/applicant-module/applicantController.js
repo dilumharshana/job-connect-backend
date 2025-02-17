@@ -1,7 +1,9 @@
 import applicantModel from "./applicantModel.js";
 
 export const saveApplicant = async (req, res) => {
-  console.log(req.body);
-
   return applicantModel.createApplicant(req, res);
+};
+
+export const allJobs = async (req, res) => {
+  return applicantModel.getAllJobs(req, res);
 };

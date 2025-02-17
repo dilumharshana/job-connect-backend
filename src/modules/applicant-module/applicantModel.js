@@ -17,7 +17,7 @@ const createApplicant = async (req, res) => {
     const [userData] = await connection.execute(userQuery, [
       email,
       password,
-      3
+      4
     ]);
 
     const companyQuery = "INSERT INTO applicants (name, user_id) VALUES (?, ?)";
@@ -41,8 +41,36 @@ const createApplicant = async (req, res) => {
   }
 };
 
+const getAllJobs = async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    if (!category) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    let jobQuery = "SELECT * FROM jobs where isActive = 1";
+
+    if (category !== "all") {
+      jobQuery = "SELECT * FROM jobs where isActive = 1 AND category = ?";
+    }
+
+    const [jobData] = await connection.execute(jobQuery, [category]);
+
+    res.status(201).json({
+      data: jobData
+    });
+  } catch (error) {
+    console.log(error.message);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
 const CompanyModule = {
-  createApplicant
+  createApplicant,
+  getAllJobs
 };
 
 export default CompanyModule;
