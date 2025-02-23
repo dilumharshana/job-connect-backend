@@ -110,7 +110,7 @@ const getAllJobs = async (req, res) => {
     }
 
     const jobQuery =
-      "SELECT jobs.*, COUNT(applications.applicantId) as applicant_count FROM jobs inner join applications on jobs.id = applications.jobId inner join company on jobs.company = company.id WHERE company.id = ? GROUP BY jobs.id ";
+      "SELECT jobs.*, COUNT(applications.applicantId) as applicant_count FROM jobs left join applications on jobs.id = applications.jobId inner join company on jobs.company = company.id WHERE company.id = ? GROUP BY jobs.id;";
 
     const [jobData] = await connection.execute(jobQuery, [companyId]);
 

@@ -49,10 +49,12 @@ const getAllJobs = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    let jobQuery = "SELECT * FROM jobs where isActive = 1";
+    let jobQuery =
+      "SELECT jobs.*, company.name as companyName FROM jobs INNER JOIN company on jobs.company = company.id where isActive = 1 ";
 
     if (category !== "all") {
-      jobQuery = "SELECT * FROM jobs where isActive = 1 AND category = ?";
+      jobQuery =
+        "SELECT jobs.*, company.name as companyName FROM jobs INNER JOIN company on jobs.company = company.id where isActive = 1 AND category = ? ";
     }
 
     const [jobData] = await connection.execute(jobQuery, [category]);
@@ -68,9 +70,62 @@ const getAllJobs = async (req, res) => {
     });
   }
 };
+
+const applyJob = async (req, res) => {
+  try {
+    const {
+      applicantId,
+      companyId,
+      jobId,
+      communication_level,
+      job_knowledge_level,
+      critical_thinking_level,
+      cv_data
+    } = req.body;
+
+    if (
+      !applicantId ||
+      !companyId ||
+      !jobId ||
+      communication_level === "" ||
+      job_knowledge_level === "" ||
+      critical_thinking_level === "" ||
+      !cv_data
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const applicationQuery =
+      "INSERT INTO applications (companyId, jobId, applicantId, communication_level, job_knowledge_level, critical_thinking_level, cv_data, status) VALUES (?,?,?,?,?,?,?,?)";
+
+    const [applicationData] = await connection.execute(applicationQuery, [
+      companyId,
+      jobId,
+      applicantId,
+      communication_level,
+      job_knowledge_level,
+      critical_thinking_level,
+      cv_data,
+      "applied"
+    ]);
+    console.log(applicationData);
+
+    res.status(201).json({
+      data: { applicationId: applicationData?.insertId }
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
 const CompanyModule = {
   createApplicant,
-  getAllJobs
+  getAllJobs,
+  applyJob
 };
 
 export default CompanyModule;

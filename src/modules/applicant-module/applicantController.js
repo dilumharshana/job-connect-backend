@@ -7,3 +7,7 @@ export const saveApplicant = async (req, res) => {
 export const allJobs = async (req, res) => {
   return applicantModel.getAllJobs(req, res);
 };
+
+export const applyJob = async (req, res) => {
+  return applicantModel.applyJob(req, res);
+};
