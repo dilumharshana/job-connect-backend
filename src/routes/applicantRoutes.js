@@ -7,7 +7,10 @@ import {
 
 const router = express.Router();
 
-router.get("/alljobs/:category", async (req, res) => await allJobs(req, res));
+router.get(
+  "/alljobs/:category/:applicantId",
+  async (req, res) => await allJobs(req, res)
+);
 
 router.post("/", async (req, res) => await saveApplicant(req, res));
 router.post("/apply", async (req, res) => await applyJob(req, res));

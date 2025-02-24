@@ -43,24 +43,31 @@ const createApplicant = async (req, res) => {
 
 const getAllJobs = async (req, res) => {
   try {
-    const { category } = req.params;
+    const { category, applicantId } = req.params;
 
-    if (!category) {
+    if (!category || !applicantId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     let jobQuery =
-      "SELECT jobs.*, company.name as companyName FROM jobs INNER JOIN company on jobs.company = company.id where isActive = 1 ";
+      "SELECT jobs.*, company.name as companyName FROM jobs LEFT JOIN company on jobs.company = company.id where jobs.id NOT IN (SELECT jobId from applications WHERE applicantId = ?) AND jobs.isActive = 1 ";
 
     if (category !== "all") {
       jobQuery =
-        "SELECT jobs.*, company.name as companyName FROM jobs INNER JOIN company on jobs.company = company.id where isActive = 1 AND category = ? ";
+        "SELECT jobs.*, company.name as companyName FROM jobs LEFT JOIN company on jobs.company = company.id where jobs.id NOT IN (SELECT jobId from applications WHERE applicantID = ?) AND jobs.isActive = 1 AND jobs.category = ? ";
     }
 
-    const [jobData] = await connection.execute(jobQuery, [category]);
+    let jobData = [];
+
+    if (category !== "all") {
+      jobData = await connection.execute(jobQuery, [applicantId, category]);
+    } else {
+      jobData = await connection.execute(jobQuery, [applicantId]);
+      console.log(jobData);
+    }
 
     res.status(201).json({
-      data: jobData
+      data: jobData?.[0]
     });
   } catch (error) {
     console.log(error.message);
