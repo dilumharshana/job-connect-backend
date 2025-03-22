@@ -78,6 +78,31 @@ const getAllJobs = async (req, res) => {
   }
 };
 
+const getAllAppliedJobs = async (req, res) => {
+  try {
+    const { applicantId } = req.params;
+
+    if (!applicantId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    let jobQuery =
+      "SELECT applications.*, jobs.job_name, company.name as company_name FROM applications INNER JOIN jobs ON applications.jobId = jobs.Id INNER JOIN company ON applications.companyId = company.id WHERE applications.applicantId = ? ";
+
+    let [jobData] = await connection.execute(jobQuery, [applicantId]);
+
+    res.status(201).json({
+      data: jobData
+    });
+  } catch (error) {
+    console.log(error.message);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
 const applyJob = async (req, res) => {
   try {
     const {
@@ -113,7 +138,7 @@ const applyJob = async (req, res) => {
       job_knowledge_level,
       critical_thinking_level,
       cv_data,
-      "applied"
+      "pending"
     ]);
     console.log(applicationData);
 
@@ -129,10 +154,111 @@ const applyJob = async (req, res) => {
   }
 };
 
+const updateApplicantQualifications = async (req, res) => {
+  try {
+    const {
+      years_of_experience = 0,
+      qualifications,
+      skills,
+      userId
+    } = req.body;
+
+    console.log(years_of_experience, qualifications, skills, userId);
+
+    if (
+      !userId ||
+      years_of_experience === null ||
+      years_of_experience === undefined ||
+      !qualifications ||
+      !skills
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    let updatedQualifications = ``;
+    let updatedSkills = ``;
+
+    qualifications?.forEach((element) => {
+      if (updatedQualifications === "") {
+        updatedQualifications = `${element}`;
+      } else {
+        updatedQualifications = `${updatedQualifications},${element}`;
+      }
+    });
+
+    skills?.forEach((element) => {
+      if (updatedSkills === "") {
+        updatedSkills = `${element}`;
+      } else {
+        updatedSkills = `${updatedSkills},${element}`;
+      }
+    });
+
+    const userQuery =
+      "UPDATE applicants SET years_of_experience = ?, qualifications = ?, skills = ? WHERE user_id = ?";
+
+    const [userData] = await connection.execute(userQuery, [
+      years_of_experience,
+      updatedQualifications,
+      updatedSkills,
+      userId
+    ]);
+
+    res.status(201).json({
+      data: { userId: userData.affectedRows }
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+const getSettings = async (req, res) => {
+  try {
+    const { applicantId } = req.params;
+
+    if (!applicantId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    let jobQuery =
+      "SELECT years_of_experience, qualifications, skills from applicants where user_id = ?";
+
+    const [results] = await connection.execute(jobQuery, [applicantId]);
+
+    const settings = {
+      skills: results?.[0]?.skills
+        ?.split(",")
+        ?.map((skill) => ({ value: skill, label: skill })),
+      qualifications: results?.[0]?.qualifications
+        ?.split(",")
+        ?.map((qualification) => ({
+          value: qualification,
+          label: qualification
+        })),
+      years_of_experience: results?.[0]?.years_of_experience
+    };
+
+    res.status(201).json(settings);
+  } catch (error) {
+    console.log(error.message);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
 const CompanyModule = {
   createApplicant,
   getAllJobs,
-  applyJob
+  applyJob,
+  getAllAppliedJobs,
+  updateApplicantQualifications,
+  getSettings
 };
 
 export default CompanyModule;
